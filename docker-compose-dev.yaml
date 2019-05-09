@@ -1,0 +1,36 @@
+version: '3.4'
+
+services:
+  yopay:
+    build:
+      context: .
+      target: develop
+    depends_on:
+      - yopay_postgres
+      - yopay_redis
+    volumes:
+      - .:/app
+    environment:
+      POSTGRES_DSN: postgresql://yopaydb:yopaydb@yopay_postgres:5432/yopaydb
+      POSTGRES_POOL_MIN_SIZE: 5
+      POSTGRES_POOL_MAX_SIZE: 20
+      REDIS_DSN: redis://yopay_redis:6379/0?encoding=utf-8
+      REDIS_POOL_MIN_SIZE: 5
+      REDIS_POOL_MAX_SIZE: 10
+      STATUS_MANAGER_TOKEN: bddcbd31-dec7-4e96-b247-101923df08ea
+    ports:
+      - 8765:8765
+
+  yopay_redis:
+    image: redis:4-alpine
+#    ports:
+#      - 6379:6379
+
+  yopay_postgres:
+    image: postgres:9.6-alpine
+    environment:
+      - POSTGRES_USER=yopaydb
+      - POSTGRES_PASSWORD=yopaydb
+      - POSTGRES_DB=yopaydb
+#    ports:
+#      - 5432:5432

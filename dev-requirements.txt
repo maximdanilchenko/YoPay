@@ -1,0 +1,7 @@
+pytest
+pytest-sugar
+pytest-aiohttp
+pytest-cov
+aiohttp-devtools
+isort
+black

@@ -1,0 +1,9 @@
+[tool.black]
+include = '\.py$'
+py37 = true
+exclude = '''
+(
+    migrations/
+  | venv/
+)
+'''

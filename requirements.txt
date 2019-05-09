@@ -1,0 +1,16 @@
+aiohttp
+aiohttp-apispec
+aiohttp-swagger
+marshmallow
+databases[postgresql]
+sqlalchemy
+alembic
+psycopg2 # for alembic
+passlib
+aioredis
+simplejson # for Decimal fields
+
+# libs for speedup
+# uvloop
+# aiodns
+# cchardet

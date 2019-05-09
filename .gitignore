@@ -1,0 +1,11 @@
+*.pyc
+/.idea
+*.cache
+/__pycache__
+*.coverage*
+.vscode
+.pytest_cache
+*.pyx
+.benchmarks
+.mypy_cache/
+/venv
