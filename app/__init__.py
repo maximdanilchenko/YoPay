@@ -3,24 +3,13 @@ __version__ = "0.0.1"
 from aiohttp import web
 from aiohttp_apispec import setup_aiohttp_apispec, validation_middleware
 from aiohttp_swagger import setup_swagger
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
 
 from app.db.postgres import close_postgres, init_postgres
 from app.db.redis import close_redis, init_redis
 from app.rates_client import RatesClient
 from app.routes import setup_routes
-
-
-async def swagger(app: web.Application):
-    setup_swagger(app=app, swagger_url="/api/doc", swagger_info=app["swagger_dict"])
-
-
-def get_description() -> str:
-    try:
-        with open("description.md", "r") as description_file:
-            description = description_file.read()
-    except FileNotFoundError:
-        description = ""
-    return description
 
 
 def create_app(config: dict) -> web.Application:
@@ -57,4 +46,25 @@ def create_app(config: dict) -> web.Application:
 
     RatesClient.register_app(app)
 
+    load_private_key(app)
+
     return app
+
+
+async def swagger(app: web.Application):
+    setup_swagger(app=app, swagger_url="/api/doc", swagger_info=app["swagger_dict"])
+
+
+def get_description() -> str:
+    try:
+        with open("description.md", "r") as description_file:
+            description = description_file.read()
+    except FileNotFoundError:
+        description = ""
+    return description
+
+
+def load_private_key(app):
+    with open(app["config"]["PRIVATE_KEY"], "r") as key_file:
+        private_key = RSA.importKey(key_file.read())
+    app["operations_signer"] = PKCS1_v1_5.new(private_key)

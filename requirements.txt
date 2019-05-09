@@ -9,6 +9,7 @@ psycopg2 # for alembic
 passlib
 aioredis
 simplejson # for Decimal fields
+pycrypto
 
 # libs for speedup
 # uvloop

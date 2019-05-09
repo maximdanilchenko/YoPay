@@ -14,4 +14,5 @@ config = {
     "SESSION_EXPIRES": 86_400,
     "RATES": {"UPDATE_INTERVAL": 60, "URL": "https://api.exchangeratesapi.io/latest"},
     "STATUS_MANAGER_TOKEN": environ["STATUS_MANAGER_TOKEN"],
+    "PRIVATE_KEY": "test_private_key.pem",
 }

@@ -1,8 +1,10 @@
 import datetime as dt
+from base64 import b64encode
 
 import sqlalchemy as sa
 from aiohttp import web
 from aiohttp_apispec import docs, request_schema
+from Crypto.Hash import SHA256
 from databases import Database
 
 from app.constants import OperationStatuses
@@ -85,6 +87,7 @@ async def create_operation(request: web.Request) -> web.Response:
         )
 
         signature = operation_signature(
+            request.app["operations_signer"],
             sender_wallet["id"],
             receiver_wallet["id"],
             data["currency"],
@@ -131,6 +134,10 @@ async def create_operation(request: web.Request) -> web.Response:
 
 
 def operation_signature(
-    sender_wallet_id, receiver_wallet_id, currency, amount, datetime
+    signer, sender_wallet_id, receiver_wallet_id, currency, amount, datetime
 ):
-    return f"{sender_wallet_id}{receiver_wallet_id}{currency}{amount}{datetime}"
+    """ Create sign for operation and return it in base64 decoded """
+    data = f"{sender_wallet_id}{receiver_wallet_id}{currency}{amount}{datetime}"
+    digest = SHA256.new()
+    digest.update(data.encode())
+    return b64encode(signer.sign(digest)).decode()
