@@ -1,32 +1,32 @@
-import pytest
-
-from passlib.hash import pbkdf2_sha256
 import factory
+import pytest
+import sqlalchemy as sa
+from passlib.hash import pbkdf2_sha256
 
 from app import create_app
-from config import config
-from app.db.postgres.models import users, wallets
 from app.constants import WalletCurrencies
+from app.db.postgres.models import users, wallets
+from config import config
 
 
 class User1(factory.DictFactory):
-    name = "Bob"
+    name = "John"
     country = "Westeros"
     city = "Winterfell"
-    login = "bob123"
-    password = "dragon2020"
+    login = "john123"
+    password = "iknownothing"
 
 
 class User1Insert(User1):
-    password = pbkdf2_sha256.hash("dragon2020")
+    password = pbkdf2_sha256.hash(User1.password)
 
 
 class User2(User1):
-    login = "bobsson"
+    login = "johnclone"
 
 
 class User2Insert(User2):
-    password = pbkdf2_sha256.hash("bobsson")
+    password = pbkdf2_sha256.hash(User2.password)
 
 
 @pytest.fixture
@@ -46,6 +46,11 @@ def cli(loop, aiohttp_client):
     return loop.run_until_complete(aiohttp_client(app))
 
 
+@pytest.fixture(autouse=True)
+def mock_rates():
+    pass
+
+
 @pytest.fixture
 async def create_users(cli):
     db = cli.app["db"]
@@ -53,9 +58,7 @@ async def create_users(cli):
         for user in (User1Insert(), User2Insert()):
 
             user_id = await db.fetch_val(
-                users.insert()
-                    .values(user)
-                    .returning(users.c.id)
+                users.insert().values(user).returning(users.c.id)
             )
             await db.execute(
                 wallets.insert().values(
@@ -66,11 +69,36 @@ async def create_users(cli):
 
 
 @pytest.fixture
-async def select_user(cli):
+async def user_selector(cli):
     db = cli.app["db"]
 
-    async def selector(login):
-        return await db.fetch_one(
-            users.select(users.c.login == login)
-        )
+    async def selector(user):
+        return await db.fetch_one(users.select(users.c.login == user["login"]))
+
     return selector
+
+
+@pytest.fixture
+async def wallet_selector(cli):
+    db = cli.app["db"]
+
+    async def selector(user):
+        return await db.fetch_one(
+            sa.select([wallets.c.amount, wallets.c.currency])
+            .select_from(wallets.join(users))
+            .where(users.c.login == user["login"])
+        )
+
+    return selector
+
+
+@pytest.fixture
+async def user_authorizer(cli):
+    async def authorizer(user):
+        resp = await cli.post(
+            "/api/auth/login",
+            json={"password": user["password"], "login": user["login"]},
+        )
+        return {"Authorization": (await resp.json())["token"]}
+
+    return authorizer
