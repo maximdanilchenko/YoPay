@@ -31,3 +31,10 @@ dev-down:
 format:
 	isort -y
 	black .
+
+#######
+# Tests
+#######
+test: db_upgrade
+	$(COMPOSE_RUN_DEV) yopay pytest tests --cov app
+

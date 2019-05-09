@@ -5,6 +5,7 @@ from databases import Database
 async def init_postgres(app: web.Application):
     app["db"] = Database(
         app["config"]["POSTGRES"]["DSN"],
+        force_rollback=app["config"].get("TESTING", False),
         min_size=app["config"]["POSTGRES"]["POOL_MIN_SIZE"],
         max_size=app["config"]["POSTGRES"]["POOL_MAX_SIZE"],
     )

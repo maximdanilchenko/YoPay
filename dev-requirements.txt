@@ -5,3 +5,4 @@ pytest-cov
 aiohttp-devtools
 isort
 black
+factory-boy

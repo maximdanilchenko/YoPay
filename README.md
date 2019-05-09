@@ -5,3 +5,8 @@
 ```bash
 make dev-run
 ```
+
+# To run tests:
+```bash
+make test
+```
