@@ -19,7 +19,6 @@ def convert_amount(
 ) -> decimal.Decimal:
     if rate_from == rate_to:
         return amount
-    places = decimal.Decimal((0, (1,), -2))
     quotation = rate_to / rate_from
     amount = amount * quotation
-    return amount.quantize(places)
+    return amount.quantize(decimal.Decimal(".01"))

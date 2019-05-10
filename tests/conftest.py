@@ -1,3 +1,5 @@
+import decimal
+
 import factory
 import pytest
 import sqlalchemy as sa
@@ -5,8 +7,18 @@ from passlib.hash import pbkdf2_sha256
 
 from app import create_app
 from app.constants import WalletCurrencies
-from app.db.postgres.models import users, wallets
+from app.db.postgres.models import users, wallets, operations
 from config import config
+
+
+@pytest.fixture
+def rates():
+    return {
+        WalletCurrencies.USD: decimal.Decimal("1"),
+        WalletCurrencies.EUR: decimal.Decimal("0.9"),
+        WalletCurrencies.CAD: decimal.Decimal("1.3"),
+        WalletCurrencies.CNY: decimal.Decimal("7"),
+    }
 
 
 class User1(factory.DictFactory):
@@ -47,8 +59,11 @@ def cli(loop, aiohttp_client):
 
 
 @pytest.fixture(autouse=True)
-def mock_rates():
-    pass
+def mock_rates(cli, rates, monkeypatch):
+    async def get_rates():
+        return rates
+
+    monkeypatch.setattr(cli.app["rates_client"], "get_rates", get_rates)
 
 
 @pytest.fixture
@@ -56,7 +71,6 @@ async def create_users(cli):
     db = cli.app["db"]
     async with db.transaction(force_rollback=True):
         for user in (User1Insert(), User2Insert()):
-
             user_id = await db.fetch_val(
                 users.insert().values(user).returning(users.c.id)
             )
@@ -93,6 +107,22 @@ async def wallet_selector(cli):
 
 
 @pytest.fixture
+async def operation_selector(cli):
+    db = cli.app["db"]
+
+    async def selector(user):
+        return await db.fetch_one(
+            operations.select()
+            .select_from(operations
+                         .join(wallets, wallets.c.id == operations.c.sender_wallet_id)
+                         .join(users))
+            .where(users.c.login == user["login"])
+        )
+
+    return selector
+
+
+@pytest.fixture
 async def user_authorizer(cli):
     async def authorizer(user):
         resp = await cli.post(
@@ -102,3 +132,8 @@ async def user_authorizer(cli):
         return {"Authorization": (await resp.json())["token"]}
 
     return authorizer
+
+
+@pytest.fixture
+async def manager_auth(cli):
+    return {'X-Status-Manager-Token': cli.app["config"]["STATUS_MANAGER_TOKEN"]}

@@ -6,3 +6,4 @@ aiohttp-devtools
 isort
 black
 factory-boy
+freezegun
