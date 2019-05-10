@@ -1,8 +1,8 @@
-import decimal
 import datetime as dt
-from freezegun import freeze_time
+import decimal
 
 import pytest
+from freezegun import freeze_time
 
 from app.constants import WalletCurrencies
 
@@ -40,9 +40,17 @@ async def test_post_balance(
     assert wallet["amount"] == actual_amount.quantize(decimal.Decimal(".01"))
 
 
-@freeze_time('2019-01-01T12:12:12.123')
+@freeze_time("2019-01-01T12:12:12.123")
 async def test_create_operation(
-    cli, create_users, user1, user2, user_authorizer, rates, amount_currency, wallet_selector, operation_selector
+    cli,
+    create_users,
+    user1,
+    user2,
+    user_authorizer,
+    rates,
+    amount_currency,
+    wallet_selector,
+    operation_selector,
 ):
     amount, currency = amount_currency
     resp = await cli.post(

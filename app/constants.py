@@ -15,6 +15,7 @@ class OperationStatuses(str, Enum):
     FAILED = "FAILED"
 
     def __str__(self):
+        """ For correct formatting in reports """
         return self.value
 
 
@@ -28,6 +29,7 @@ class ReportTypes(str, Enum):
     STATUSES = "statuses"
 
 
+# Allowed transactions between operation states
 ALLOWED_TRANSACTIONS = {
     OperationStatuses.DRAFT: [OperationStatuses.PROCESSING, OperationStatuses.FAILED],
     OperationStatuses.PROCESSING: [

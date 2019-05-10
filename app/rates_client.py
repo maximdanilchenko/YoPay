@@ -10,6 +10,11 @@ RATES_KEY = "rates"
 
 
 class RatesClient:
+    """
+    Makes requests to rates service every update_interval seconds.
+    Uses redis for caching.
+    """
+
     def __init__(self):
         self.session = None
         self.url = None

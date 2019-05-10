@@ -52,8 +52,6 @@ async def change_status(request: web.Request) -> web.Response:
                 amount_from_sender = convert_amount(
                     rate_to=operation["sender_wallet_rate"], amount=operation["amount"]
                 )
-                print(sender_wallet["amount"])
-                print(amount_from_sender)
                 if sender_wallet["amount"] < amount_from_sender:
                     return json_response(
                         {}, status=202, error="Not enough money on sender wallet"

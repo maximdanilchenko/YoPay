@@ -17,6 +17,7 @@ def convert_amount(
     rate_to: decimal.Decimal = decimal.Decimal("1.00"),
     amount: decimal.Decimal
 ) -> decimal.Decimal:
+    """ Convert amount of money from one currency to another based on its rates. """
     if rate_from == rate_to:
         return amount
     quotation = rate_to / rate_from

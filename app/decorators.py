@@ -5,6 +5,10 @@ from aioredis.commands import Redis
 
 
 def authorized_user(*args, **kwargs):
+    """
+    Auth decorator. It could be callable or not - it
+    made for optional "allow_unauthorized" parameter
+    """
 
     if args and callable(args[0]):
         view_func = args[0]
@@ -42,6 +46,10 @@ def authorized_user(*args, **kwargs):
 
 
 def authorized_status_manager(func):
+    """
+    Checking for "X-Status-Manager-Token" header for status management system auth
+    """
+
     @wraps(func)
     async def wrapper(request: web.Request):
 

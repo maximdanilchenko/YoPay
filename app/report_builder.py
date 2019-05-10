@@ -10,8 +10,13 @@ from app.constants import OperationStatuses, ReportFormats, ReportTypes
 from app.db.postgres.models import operations, operations_statuses, users, wallets
 from app.utils import json_response
 
+__all__ = ["make_report_builder"]
+
 
 def make_report_builder(request, report_format, report_type):
+    """
+    Returns needed ReportBuilder subclass based on report_format and report_type.
+    """
     builder = {
         ReportFormats.CSV: CSVReportBuilder,
         ReportFormats.XML: XMLReportBuilder,
@@ -22,15 +27,6 @@ def make_report_builder(request, report_format, report_type):
 class BytesStream:
     def write(self, string: str) -> bytes:
         return string.encode()
-
-
-def dict_to_xml(tag, d):
-    elem = Element(tag)
-    for key, val in d.items():
-        child = Element(key)
-        child.text = str(val)
-        elem.append(child)
-    return tostring(elem)
 
 
 class ReportBuilder(ABC):
@@ -44,15 +40,18 @@ class ReportBuilder(ABC):
     @property
     @abstractmethod
     def content_type(self) -> str:
+        """ "Content-Type" header value """
         ...
 
     @abstractmethod
-    async def stream_report(self, response, query):
+    async def stream_report(self, response: web.StreamResponse, query):
+        """ Actual streaming """
         ...
 
     async def build_report_response(self) -> web.StreamResponse:
+        """ Stream report file to client without saving whole file in memory """
 
-        if not self.user_id:
+        if not self.user_id:  # If it is not authorized request
             try:
                 login = self.query_params["user_login"]
             except KeyError:
@@ -62,7 +61,9 @@ class ReportBuilder(ABC):
             )
             if not user_id:
                 return json_response({}, status=404, error="User not found")
+            self.user_id = user_id
 
+        # Building query based on report type
         query = build_report_query(
             self.user_id,
             self.report_type,
@@ -70,6 +71,7 @@ class ReportBuilder(ABC):
             date_to=self.query_params.get("date_to"),
         )
 
+        # Preparing streaming response
         response = web.StreamResponse(
             status=200, headers={"Content-Type": self.content_type}
         )
@@ -91,7 +93,7 @@ class XMLReportBuilder(ReportBuilder):
     def content_type(self) -> str:
         return "text/xml"
 
-    async def stream_report(self, response, query):
+    async def stream_report(self, response: web.StreamResponse, query):
 
         main_tag, one_tag = self.REPORT_TAG_MAP[self.report_type]
 
@@ -100,8 +102,17 @@ class XMLReportBuilder(ReportBuilder):
         )
         async with self.db.transaction():
             async for record in self.db.iterate(query):
-                await response.write(dict_to_xml(one_tag, record) + b"\n")
+                await response.write(self.dict_to_xml(one_tag, record) + b"\n")
         await response.write(b"</%s>\n" % main_tag)
+
+    @staticmethod
+    def dict_to_xml(tag, d):
+        elem = Element(tag)
+        for key, val in d.items():
+            child = Element(key)
+            child.text = str(val)
+            elem.append(child)
+        return tostring(elem)
 
 
 class CSVReportBuilder(ReportBuilder):
@@ -122,7 +133,7 @@ class CSVReportBuilder(ReportBuilder):
     def content_type(self) -> str:
         return "text/csv"
 
-    async def stream_report(self, response, query):
+    async def stream_report(self, response: web.StreamResponse, query):
         writer = csv.writer(BytesStream())
         await response.write(writer.writerow(self.ROW_NAMES_MAP[self.report_type]))
         async with self.db.transaction():

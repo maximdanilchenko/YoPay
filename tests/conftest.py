@@ -7,7 +7,7 @@ from passlib.hash import pbkdf2_sha256
 
 from app import create_app
 from app.constants import WalletCurrencies
-from app.db.postgres.models import users, wallets, operations
+from app.db.postgres.models import operations, users, wallets
 from config import config
 
 
@@ -113,9 +113,11 @@ async def operation_selector(cli):
     async def selector(user):
         return await db.fetch_one(
             operations.select()
-            .select_from(operations
-                         .join(wallets, wallets.c.id == operations.c.sender_wallet_id)
-                         .join(users))
+            .select_from(
+                operations.join(
+                    wallets, wallets.c.id == operations.c.sender_wallet_id
+                ).join(users)
+            )
             .where(users.c.login == user["login"])
         )
 
@@ -136,4 +138,4 @@ async def user_authorizer(cli):
 
 @pytest.fixture
 async def manager_auth(cli):
-    return {'X-Status-Manager-Token': cli.app["config"]["STATUS_MANAGER_TOKEN"]}
+    return {"X-Status-Manager-Token": cli.app["config"]["STATUS_MANAGER_TOKEN"]}
