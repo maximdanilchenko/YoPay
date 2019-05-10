@@ -66,4 +66,4 @@ async def test_create_operation(
     assert operation["receiver_wallet_rate"] == rates[user2_wallet["currency"]]
     actual_amount = decimal.Decimal(amount) / rates[currency]
     assert operation["amount"] == actual_amount.quantize(decimal.Decimal(".01"))
-    assert operation["datetime"] == dt.datetime(2019, 1, 1, 12, 12, 12, 123)
+    assert operation["datetime"] == dt.datetime(2019, 1, 1, 12, 12, 12, 123000)
