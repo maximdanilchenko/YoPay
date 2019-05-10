@@ -5,7 +5,6 @@ async def test_registration(cli, user1, user_selector):
     assert resp.status == 200
     user = await user_selector(user1)
     assert user
-    user = dict(user)
     assert user["login"] == user1["login"]
     assert user["city"] == user1["city"]
     assert user["country"] == user1["country"]
