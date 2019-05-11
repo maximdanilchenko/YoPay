@@ -27,19 +27,13 @@ async def signup(request: web.Request):
         if login_exists:
             return json_response({"user": {"login": "Already exists."}}, status=422)
 
+        user["password"] = pbkdf2_sha256.hash(user["password"])
+
         # Use transaction to make sure both user and wallet are created
         async with con.transaction():
             # Creating user
             user_id = await con.fetch_val(
-                users.insert()
-                .values(
-                    name=user["name"],
-                    country=user["country"],
-                    city=user["city"],
-                    login=user["login"],
-                    password=pbkdf2_sha256.hash(user["password"]),
-                )
-                .returning(users.c.id)
+                users.insert().values(user).returning(users.c.id)
             )
             # Creating user wallet
             await con.execute(
